@@ -5,7 +5,6 @@ mongoose.Schema.Types.String.set('trim', true);
 const commentSchema =
 
   new Schema({
-  _id: mongoose.Schema.Types.ObjectId,
 
   user: {
     type: mongoose.Schema.Types.ObjectId,

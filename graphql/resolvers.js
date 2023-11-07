@@ -22,9 +22,7 @@ module.exports = {
   Mutation: {
 
     async userCreate(_, {userInput: {firstName, lastName}}){
-      const userId = generateId()
       const createdUser = new User ({
-        _id: userId,
         firstName: firstName,
         lastName: lastName,
       });
@@ -50,12 +48,9 @@ module.exports = {
       return wasDeleted;
     },
 
-    async commentCreate(_, {ID, commentInput: {rating, title, description}}){
-      const commentId = generateId();
+    async commentCreate(_, {commentInput: {rating, title, description}}){
       const createdComment =
         new Comment ({
-          _id: commentId,
-          user: ID,
           createdAt: new Date().toISOString(),
           rating: rating,
           title: title,
@@ -71,7 +66,7 @@ module.exports = {
     async commentUpdateById(_, {ID, commentInput: {rating, title, description}}){
       const wasUpdated = (await Comment.updateOne(
         {_id: ID},
-        {firstName: firstName, lastName: lastName})).modifiedCount;
+        {rating: rating, title: title, description: description})).modifiedCount;
       return wasUpdated;
     },
 

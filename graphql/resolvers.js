@@ -1,83 +1,131 @@
+const { get } = require('lodash');
 const User = require('../models/User')
 const Comment = require('../models/Comment')
 const generateId = require('../utils/generateId')
 
 module.exports = {
+  User: {
+    comments: async ({comments}) => Comment.find({_id: { $in: comments}})
+  },
+  Comment: {
+    user: async ({user}) => User.findById(user)
+  },
 
   Query: {
     async usersGetAll(_, {amount}) {
       return await User.find().sort({createdAt: -1}).limit(amount)
     },
-    async userGetById(_, {ID}){
-      return await User.findById(ID)
+
+    async userGetById(_, {userId: id}){
+    return await User.findById(id)
     },
     async commentGetAll(_, {amount}) {
       return await Comment.find().sort({createdAt: -1}).limit(amount)
     },
-    async commentGetById(_, {ID}){
-      return await Comment.findById(ID)
+    async commentGetById(_, {commentId: id}){
+      return await Comment.findById(id)
     }
   },
 
   Mutation: {
-
-    async userCreate(_, {userInput: {firstName, lastName}}){
+    async userCreate(_, {
+      userInput: {
+      firstName,
+      lastName,
+    }
+    }
+    ){
       const userId = generateId()
-      const createdUser = new User ({
+      const user = {
         _id: userId,
         firstName: firstName,
         lastName: lastName,
-      });
+      }
 
+      const createdUser = new User (user);
       const res = await createdUser.save();
-
       return {
-        id: res.id,
         ...res._doc
       }
     },
 
-    async userUpdateById(_, {ID, userInput: {firstName, lastName}}){
+    async userUpdateById(_, {userInput: {userId, firstName, lastName}}){
       const wasUpdated = (await User.updateOne(
-        {_id: ID},
+        {_id: userId},
         {firstName: firstName, lastName: lastName})).modifiedCount;
       return wasUpdated;
     },
 
-    async userDeleteById(_, {ID}){
+    async userDeleteById(_, {userId: id}){
       const wasDeleted = (await User.deleteOne(
-        {_id: ID})).deletedCount;
+        {_id: id})).deletedCount;
       return wasDeleted;
     },
 
-    async commentCreate(_, {ID, commentInput: {rating, title, description}}){
-      const commentId = generateId();
-      const createdComment =
-        new Comment ({
-          _id: commentId,
-          user: ID,
-          createdAt: new Date().toISOString(),
-          rating: rating,
-          title: title,
-          description: description,
-      });
+    async commentCreate(_, {
+      commentInput: {
+        user: {
+          userId,
+          firstName,
+          lastName
+        },
+        rating,
+        title,
+        description
+      }
+    }
+    ){
+      const commentId = generateId()
+      const newUserId = generateId()
 
-      const res = await createdComment.save();
+      const newUser = {
+        _id: newUserId,
+        firstName: firstName,
+        lastName: lastName,
+      }
+
+      const comment = {
+        _id: commentId,
+        user: userId ||newUserId,
+        createdAt: new Date().toISOString(),
+        rating: rating,
+        title: title,
+        description: description,
+      }
+
+      let createdUser = null;
+      if(!userId) {
+        createdUser = new User(newUser)
+        const resUser = await createdUser.save();
+        return {
+          ...resUser._doc
+        }
+      } else {
+          const update = { $addToSet: { comments: commentId} };
+          const resUser = await User.updateOne({_id: userId}, update);
+          return  {
+            ...resUser._doc
+          }
+      }
+
+      let createdComment = null;
+      createdComment = new Comment (comment);
+
+      const resComm = await createdComment.save();
       return {
-        id: res.id,
-        ...res._doc
+        ...resComm._doc
       }
     },
-    async commentUpdateById(_, {ID, commentInput: {rating, title, description}}){
+    async commentUpdateById(_, {commentInput: {commentId, rating, title, description}}){
       const wasUpdated = (await Comment.updateOne(
-        {_id: ID},
-        {firstName: firstName, lastName: lastName})).modifiedCount;
+        {_id: commentId},
+        {rating: rating, title: title, description: description})).modifiedCount;
       return wasUpdated;
     },
 
-    async commentDeleteById(_, {ID}){
+    async commentDeleteById(_, {commentId: id}){
       const wasDeleted = (await Comment.deleteOne(
-        {_id: ID})).deletedCount;
+        {_id: id})).deletedCount;
       return wasDeleted;
     },
   }

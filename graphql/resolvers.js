@@ -11,6 +11,7 @@ module.exports = {
     user: async ({user}) => User.findById(user)
   },
 
+
   Query: {
     async usersGetAll(_, {amount}) {
       return await User.find().sort({createdAt: -1}).limit(amount)

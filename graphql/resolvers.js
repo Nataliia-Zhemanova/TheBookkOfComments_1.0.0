@@ -1,9 +1,9 @@
-const { get } = require('lodash');
 const User = require('../models/User')
 const Comment = require('../models/Comment')
 const generateId = require('../utils/generateId')
 
 module.exports = {
+
   User: {
     comments: async ({comments}) => Comment.find({_id: { $in: comments}})
   },
@@ -28,6 +28,7 @@ module.exports = {
   },
 
   Mutation: {
+    // USER
     async userCreate(_, {
       userInput: {
       firstName,
@@ -49,7 +50,14 @@ module.exports = {
       }
     },
 
-    async userUpdateById(_, {userInput: {userId, firstName, lastName}}){
+    async userUpdateById(_, {
+      userInput: {
+        userId,
+        firstName,
+        lastName,
+      }
+    }
+    ){
       const wasUpdated = (await User.updateOne(
         {_id: userId},
         {firstName: firstName, lastName: lastName})).modifiedCount;
@@ -62,6 +70,7 @@ module.exports = {
       return wasDeleted;
     },
 
+    //COMMENT
     async commentCreate(_, {
       commentInput: {
         user: {
@@ -94,28 +103,36 @@ module.exports = {
       }
 
       let createdUser = null;
+      //if we don't have a user for this comment, we'll create it here:
       if(!userId) {
-        createdUser = new User(newUser)
+        createdUser = new User(
+          {
+          ...newUser,
+          comments: {
+            _id: comment._id,
+            createdAt: comment.createdAt,
+            rating: comment.rating,
+            title: comment.title,
+            description: comment.description
+            }
+          }
+        )
         const resUser = await createdUser.save();
-        return {
-          ...resUser._doc
-        }
       } else {
+      //if the user exists, we'l add a commentId
           const update = { $addToSet: { comments: commentId} };
           const resUser = await User.updateOne({_id: userId}, update);
-          return  {
-            ...resUser._doc
-          }
       }
 
+      //creating a comment
       let createdComment = null;
       createdComment = new Comment (comment);
-
       const resComm = await createdComment.save();
       return {
         ...resComm._doc
       }
     },
+
     async commentUpdateById(_, {commentInput: {commentId, rating, title, description}}){
       const wasUpdated = (await Comment.updateOne(
         {_id: commentId},
@@ -129,4 +146,5 @@ module.exports = {
       return wasDeleted;
     },
   }
+
 }

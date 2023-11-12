@@ -7,7 +7,6 @@ type User {
      lastName: String
      comments: [Comment]
     }
-    
 type Comment {
     _id: ID!
     user: User
@@ -16,12 +15,10 @@ type Comment {
     title: String
     description: String
 }
-
 input UserFields {
-    userId: ID
+    _id: ID!
     firstName: String
     lastName: String
-    comment: ID
 }
 input UserFieldsInComment {
     userId: ID
@@ -36,43 +33,38 @@ input CommentFields {
     user: ID
 }
 input CommentUpdateInput {
-    commentId: ID
+    _id: ID!
     rating: Int
     title: String
     description: String
 }
-
 input UserItems {
     firstName: String
     lastName: String
 }
-
 input CommentItems {
     rating: Int
     title: String
     description: String
 }
-
 input CommentCreateInput {
     user: UserFieldsInComment
     rating: Int
     title: String
     description: String
 }
-
 type Query {
     usersGetAll(amount: Int): [User]
     userGetById(userId: ID!): User!
     commentGetAll(amount: Int): [Comment]
-    commentGetById(commentId: ID!): Comment!
+    commentGetById(commentId: ID!): Comment
 }
-
 type Mutation {
     userCreate(userInput: UserItems): User
     userUpdateById(userInput: UserFields): User
     userDeleteById(userId: ID!): Boolean
-    commentCreate(commentInput: CommentCreateInput): Comment!
-    commentUpdateById(commentInput: CommentUpdateInput): Comment!
+    commentCreate(commentInput: CommentCreateInput): Comment
+    commentUpdateById(commentInput: CommentUpdateInput): Comment
     commentDeleteById(commentId: ID!): Boolean
 }
 `
